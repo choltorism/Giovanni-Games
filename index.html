@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17120f"><title>بازی‌های جیووانی</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="page">
+<header class="brand"><div class="mark">G</div><div><p class="eyebrow">GIOVANNI CAFE</p><h1>بازی‌های جیووانی</h1><p class="muted">یه بازی کوتاه، یه جایزه خوشمزه ☕</p></div></header>
+<section id="welcome" class="panel"><p class="eyebrow">به جمع جیووانی خوش اومدی</p><h2>اول اسمت رو بگو!</h2><p class="muted">فقط اسم کوچیکت کافیه؛ ایمیل و ثبت‌نام لازم نیست.</p><form id="name-form"><label for="player-name">اسم کوچیک</label><input id="player-name" maxlength="24" placeholder="مثلاً سعید" required><button class="primary">بریم بازی کنیم ←</button></form></section>
+<section id="menu" class="hidden"><p class="eyebrow">انتخاب با توئه</p><h2><span id="hello-name"></span>، کدوم بازی؟</h2><p class="muted">یکی رو انتخاب کن و رکورد خودت رو بزن.</p><div class="games">
+<button class="tile" data-game="memory"><b>🧠 جفت‌یابی</b><small>کارت‌های مشابه رو پیدا کن</small></button>
+<button class="tile" data-game="target"><b>🎯 هدف‌گیری سریع</b><small>هدف رو قبل از محو شدن بزن</small></button>
+<button class="tile" data-game="catch"><b>🧺 Catch & Win</b><small>خوراکی‌ها رو بگیر، زباله‌ها رو نه</small></button>
+<button class="tile" data-game="tap"><b>⚡ سرعت لمس</b><small>در زمان محدود سریع لمس کن</small></button>
+<button class="tile" data-game="pizza"><b>🍕 پازل پیتزا</b><small>تکه‌ها رو به ترتیب بچین</small></button></div></section>
+<section id="game" class="panel hidden"><button id="back" class="back">→ برگشت به بازی‌ها</button><div class="gamehead"><div><p class="eyebrow">بازی جیووانی</p><h2 id="game-title"></h2></div><div class="timer"><strong id="time">30</strong><small>ثانیه</small></div></div><p id="instructions" class="muted"></p><div id="area" class="area"></div><p>امتیاز: <strong id="score">0</strong></p><button id="start" class="primary">شروع بازی</button></section>
+<section id="result" class="panel hidden"><div class="big">🎉</div><p class="eyebrow">نتیجه بازی</p><h2 id="result-title"></h2><p id="result-copy" class="muted"></p><p class="result-score">امتیاز تو: <strong id="final-score">0</strong></p><p class="fine">این نسخه هنوز کد تخفیف واقعی صادر نمی‌کند؛ جایزه و کد یکتا در مرحلهٔ بعد وصل می‌شود.</p><button id="again" class="primary">انتخاب بازی دیگه</button><a class="insta" href="https://www.instagram.com/giovanni.cafe/" target="_blank" rel="noopener">@giovanni.cafe</a></section>
+<footer>ساخته‌شده با عشق برای <b>Giovanni Cafe</b> ☕</footer></main><script src="app.js"></script></body></html>
