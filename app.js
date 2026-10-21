@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s);let name='دوست جیووانی',game='',score=0,time=30,timer=null,loop=null,timeout=null,pizzaCountdown=null,pizzaActive=false;
-const info={memory:['جفت‌یابی','کارت‌ها رو برگردون و ۶ جفت مشابه پیدا کن.'],target:['هدف‌گیری سریع','هر بار هدف ظاهر شد سریع لمسش کن.'],catch:['Catch & Win','خوراکی‌ها رو بگیر و از زباله‌ها دوری کن؛ چپ و راست صفحه رو لمس کن.'],tap:['سرعت لمس','در ۱۵ ثانیه تا می‌تونی دکمه رو لمس کن.'],pizza:['پازل پیتزا','اول تصویر رو ببین؛ بعد از به‌هم‌ریختن تکه‌ها، هر تکه رو با انگشت بکش و سر جای خودش رها کن.']};
+const info={memory:['جفت‌یابی','کارت‌ها رو برگردون و ۶ جفت مشابه پیدا کن.'],target:['هدف‌گیری سریع','هر بار هدف ظاهر شد سریع لمسش کن.'],catch:['Catch & Win','خوراکی‌ها رو بگیر و از زباله‌ها دوری کن؛ چپ و راست صفحه رو لمس کن.'],tap:['سرعت لمس','در ۱۵ ثانیه تا می‌تونی دکمه رو لمس کن.'],pizza:['پازل پیتزا','اول تصویر رو ببین؛ بعد تکه‌ها رو داخل همین صفحه با انگشت جابه‌جا کن تا پیتزا کامل بشه.']};
 function show(id){['welcome','menu','game','result'].forEach(x=>$('#'+x).classList.toggle('hidden',x!==id))}
 $('#name-form').onsubmit=e=>{e.preventDefault();name=$('#player-name').value.trim().slice(0,24);if(!name)return;$('#hello-name').textContent=name;show('menu')};
 document.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>{game=b.dataset.game;$('#game-title').textContent=info[game][0];$('#instructions').textContent=info[game][1];$('#area').innerHTML='';$('#score').textContent='0';$('#start').classList.remove('hidden');show('game')});
@@ -17,7 +17,60 @@ function pizza(){
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><radialGradient id="cr"><stop stop-color="#ffe7a1"/><stop offset=".82" stop-color="#f5bd52"/><stop offset="1" stop-color="#bd6428"/></radialGradient></defs><circle cx="150" cy="150" r="145" fill="#7b4428"/><circle cx="150" cy="150" r="137" fill="#e9a747"/><circle cx="150" cy="150" r="126" fill="url(#cr)" stroke="#ffd980" stroke-width="8"/><circle cx="150" cy="150" r="111" fill="#f7e4a0"/>${Array.from({length:16},(_,i)=>{let a=i*Math.PI/8,x=150+Math.cos(a)*82,y=150+Math.sin(a)*82;return `<circle cx="${x}" cy="${y}" r="${i%3===0?13:9}" fill="${i%2?'#cf3d2c':'#a72d20'}" stroke="#f17a43" stroke-width="3"/>`}).join('')}${Array.from({length:11},(_,i)=>{let a=i*2.399,x=150+Math.cos(a)*((i%3)*25+25),y=150+Math.sin(a)*((i%3)*25+25);return `<ellipse cx="${x}" cy="${y}" rx="8" ry="5" transform="rotate(${i*23} ${x} ${y})" fill="#2c4e27"/>`}).join('')}${Array.from({length:8},(_,i)=>{let x=90+(i*37)%120,y=78+(i*53)%140;return `<ellipse cx="${x}" cy="${y}" rx="9" ry="5" transform="rotate(${i*29} ${x} ${y})" fill="#f3d14c"/>`}).join('')}</svg>`;
  const img='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);let preview=document.createElement('div');preview.className='pizza-preview';preview.style.backgroundImage=`url("${img}")`;preview.innerHTML='<div class="pizza-count">آماده‌ای؟ <strong>3</strong></div>';area.append(preview);$('#instructions').textContent='تصویر رو خوب نگاه کن؛ پازل تا ۳ ثانیه دیگه به‌هم می‌ریزه.';let n=3;$('#time').textContent='3';pizzaCountdown=setInterval(()=>{n--;if(n>0){preview.querySelector('strong').textContent=n;$('#time').textContent=n}else{clearInterval(pizzaCountdown);pizzaCountdown=null;preview.remove();beginPizza(img)}},1000)
 }
-function beginPizza(img){if(game!=='pizza')return;pizzaActive=true;time=30;$('#time').textContent='30';$('#instructions').textContent='هر تکه رو با انگشت بگیر و روی جای درستش رها کن.';let wrap=document.createElement('div');wrap.className='jigsaw-wrap';let board=document.createElement('div');board.className='jigsaw-board';let tray=document.createElement('div');tray.className='jigsaw-tray';wrap.append(board,tray);$('#area').append(wrap);let pieces=Array.from({length:9},(_,i)=>i).sort(()=>Math.random()-.5);let placed=0;
- pieces.forEach((idx)=>{let slot=document.createElement('div');slot.className='jigsaw-slot';slot.dataset.idx=idx;slot.style.backgroundImage=`url("${img}")`;slot.style.backgroundPosition=`${(idx%3)*50}% ${Math.floor(idx/3)*50}%`;board.append(slot);let p=document.createElement('button');p.type='button';p.className='jigsaw-piece';p.dataset.idx=idx;p.setAttribute('aria-label','تکه پازل');p.style.backgroundImage=`url("${img}")`;p.style.backgroundPosition=`${(idx%3)*50}% ${Math.floor(idx/3)*50}%`;p.style.left=((idx%3)*33)+'%';p.style.top=(Math.floor(idx/3)*33)+'%';tray.append(p);let sx=0,sy=0,origX=0,origY=0; p.addEventListener('pointerdown',e=>{if(!pizzaActive||p.classList.contains('placed'))return;e.preventDefault();p.setPointerCapture(e.pointerId);let r=p.getBoundingClientRect(),tr=tray.getBoundingClientRect();sx=e.clientX;sy=e.clientY;origX=r.left-tr.left;origY=r.top-tr.top;p.classList.add('dragging');p.style.zIndex='5';p.onpointermove=ev=>{let rr=tray.getBoundingClientRect();p.style.left=(origX+ev.clientX-sx)+'px';p.style.top=(origY+ev.clientY-sy)+'px'};p.onpointerup=ev=>{p.classList.remove('dragging');p.style.zIndex='';p.onpointermove=null;p.onpointerup=null;let target=slot.getBoundingClientRect(),pr=p.getBoundingClientRect(),cx=pr.left+pr.width/2,cy=pr.top+pr.height/2;if(cx>target.left-18&&cx<target.right+18&&cy>target.top-18&&cy<target.bottom+18){slot.style.backgroundImage=`url("${img}")`;slot.style.backgroundPosition=`${(idx%3)*50}% ${Math.floor(idx/3)*50}%`;slot.classList.add('filled');p.remove();placed++;add(1);if(placed===9){pizzaActive=false;finish()}}else{p.style.left=origX+'px';p.style.top=origY+'px'}}});});
- timer=setInterval(()=>{if(!pizzaActive)return;time--;$('#time').textContent=time;if(time<=0)finish()},1000)
+function beginPizza(img){
+ if(game!=='pizza')return;
+ pizzaActive=true;time=30;$('#time').textContent='30';
+ $('#instructions').textContent='هر تکه رو با انگشت بگیر و روی تکه‌ای که باید جاش عوض بشه رها کن تا تصویر کامل بشه.';
+ const board=document.createElement('div');board.className='jigsaw-board';
+ $('#area').append(board);
+ const shuffled=Array.from({length:9},(_,i)=>i);
+ // Avoid starting with an already-solved board.
+ do{shuffled.sort(()=>Math.random()-.5)}while(shuffled.every((v,i)=>v===i));
+ let pieces=[];
+ shuffled.forEach((correctIdx,position)=>{
+   const p=document.createElement('button');
+   p.type='button';p.className='jigsaw-piece';
+   p.dataset.correct=String(correctIdx);
+   p.setAttribute('aria-label','تکه پازل؛ برای جابه‌جایی بکش');
+   p.style.backgroundImage=`url("${img}")`;
+   p.style.backgroundPosition=`${(correctIdx%3)*50}% ${Math.floor(correctIdx/3)*50}%`;
+   p.style.order=String(position);
+   p.addEventListener('pointerdown',e=>{
+     if(!pizzaActive)return;
+     e.preventDefault();
+     const startX=e.clientX,startY=e.clientY;
+     p.setPointerCapture(e.pointerId);
+     p.classList.add('dragging');
+     p.style.pointerEvents='none';
+     p.style.transform='scale(1.04)';
+     const move=ev=>{p.style.translate=`${ev.clientX-startX}px ${ev.clientY-startY}px`};
+     const end=ev=>{
+       p.removeEventListener('pointermove',move);
+       p.removeEventListener('pointerup',end);
+       p.removeEventListener('pointercancel',end);
+       p.classList.remove('dragging');
+       p.style.pointerEvents='';
+       p.style.transform='';
+       p.style.translate='';
+       const under=document.elementFromPoint(ev.clientX,ev.clientY);
+       const other=under&&under.closest?under.closest('.jigsaw-piece'):null;
+       if(other&&other!==p&&other.parentElement===board&&pizzaActive){
+         const before=pieces.filter(x=>Number(x.style.order)===Number(x.dataset.correct)).length;
+         const a=Number(p.style.order),b=Number(other.style.order);
+         p.style.order=String(b);other.style.order=String(a);
+         const after=pieces.filter(x=>Number(x.style.order)===Number(x.dataset.correct)).length;
+         if(after>before)add(after-before);
+         pieces.forEach(x=>x.classList.toggle('piece-correct',Number(x.style.order)===Number(x.dataset.correct)));
+         if(pieces.every(x=>Number(x.style.order)===Number(x.dataset.correct))){
+           pizzaActive=false;finish();
+         }
+       }
+     };
+     p.addEventListener('pointermove',move);
+     p.addEventListener('pointerup',end);
+     p.addEventListener('pointercancel',end);
+   });
+   pieces.push(p);board.append(p);
+ });
+ timer=setInterval(()=>{if(!pizzaActive)return;time--;$('#time').textContent=time;if(time<=0)finish()},1000);
 }
