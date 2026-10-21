@@ -26,6 +26,22 @@ function pizza(){
   let tiles=[0,1,2,3,4,5,6,7,8],dragFrom=null,dragging=null,started=false;
   // Fisher-Yates shuffle; ensure no piece starts in its solved position when possible.
   do {for(let i=tiles.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]]}} while(tiles.some((v,i)=>v===i));
+  function attemptSwap(from,to){
+    if(!started||time<=0||from===to)return;
+    // Correctly placed pieces are locked, so they cannot be moved away or used to farm points.
+    if(tiles[from]===from||tiles[to]===to)return;
+    const before=tiles.reduce((n,t,i)=>n+(t===i?1:0),0);
+    [tiles[from],tiles[to]]=[tiles[to],tiles[from]];
+    const after=tiles.reduce((n,t,i)=>n+(t===i?1:0),0);
+    const earned=Math.max(0,after-before);
+    if(earned>0)add(earned);
+    draw();
+    if(tiles.every((v,i)=>v===i)){
+      started=false;
+      status.textContent='🍕 آفرین! پیتزا کامل شد!';
+      finish();
+    }
+  }
   function draw(){
     grid.innerHTML='';
     tiles.forEach((tile,pos)=>{
@@ -34,8 +50,9 @@ function pizza(){
       el.style.backgroundSize='300% 300%';
       el.style.backgroundPosition=(tile%3*50)+'% '+(Math.floor(tile/3)*50)+'%';
       el.tabIndex=0;
+      if(tile===pos){el.classList.add('gv-correct');el.setAttribute('aria-label','تکهٔ درست پیتزا '+(tile+1));}
       el.addEventListener('pointerdown',e=>{
-        if(!started||time<=0)return;
+        if(!started||time<=0||tile===pos)return;
         dragFrom=Number(el.dataset.pos);dragging=el;el.classList.add('gv-dragging');
         el.setPointerCapture?.(e.pointerId);
         e.preventDefault();
@@ -46,13 +63,22 @@ function pizza(){
         if(dragging)dragging.classList.remove('gv-dragging');
         dragging=null;
         const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.gv-pizza-tile');
-        if(target&&grid.contains(target)){
-          const to=Number(target.dataset.pos);
-          if(from!==to){[tiles[from],tiles[to]]=[tiles[to],tiles[from]];add(1);draw();if(tiles.every((v,i)=>v===i)){status.textContent='🍕 آفرین! پیتزا کامل شد!';finish()}}
-        }
+        if(target&&grid.contains(target))attemptSwap(from,Number(target.dataset.pos));
       });
       el.addEventListener('pointercancel',()=>{dragFrom=null;if(dragging)dragging.classList.remove('gv-dragging');dragging=null});
-      el.addEventListener('keydown',e=>{if(!started)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();if(dragFrom===null){dragFrom=pos;el.classList.add('gv-selected')}else{const from=dragFrom;grid.querySelectorAll('.gv-selected').forEach(x=>x.classList.remove('gv-selected'));dragFrom=null;if(from!==pos){[tiles[from],tiles[pos]]=[tiles[pos],tiles[from]];add(1);draw();if(tiles.every((v,i)=>v===i))finish()}}}});
+      el.addEventListener('keydown',e=>{
+        if(!started)return;
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          if(dragFrom===null){if(tile!==pos){dragFrom=pos;el.classList.add('gv-selected')}}
+          else{
+            const from=dragFrom;
+            grid.querySelectorAll('.gv-selected').forEach(x=>x.classList.remove('gv-selected'));
+            dragFrom=null;
+            attemptSwap(from,pos);
+          }
+        }
+      });
       grid.append(el);
     });
   }
@@ -80,6 +106,7 @@ function injectPuzzleCss(){
  .gv-pizza-tile:active{cursor:grabbing}
  .gv-pizza-tile.gv-dragging{opacity:.72;z-index:3;outline:3px solid #fff2c8}
  .gv-pizza-tile.gv-selected{outline:4px solid #ffe09a;z-index:2}
+ .gv-pizza-tile.gv-correct{cursor:default;box-shadow:inset 0 0 0 2px rgba(255,238,180,.9)}
  @media(max-width:420px){.gv-puzzle-wrap{padding:6px}.gv-puzzle-stage{max-height:64vh}}
  `;
  document.head.append(style);
