@@ -100,7 +100,7 @@ function injectPuzzleCss(){
  .gv-puzzle-status{text-align:center;font-size:clamp(14px,3.7vw,19px);line-height:1.5;margin:4px 0 14px;min-height:2.5em;color:#e8c17b}
  .gv-puzzle-stage{position:relative;width:100%;aspect-ratio:1/1;max-height:72vh;margin:auto}
  .gv-puzzle-preview{display:block;width:100%;height:100%;object-fit:contain;border-radius:16px;background:#17120f}
- .gv-puzzle-grid{display:grid;position:absolute;inset:0;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3px;overflow:hidden;border-radius:16px;background:#e9c47c;border:3px solid #e9c47c;box-sizing:border-box;touch-action:none;user-select:none;-webkit-user-select:none}
+ .gv-puzzle-grid{direction:ltr;display:grid;position:absolute;inset:0;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3px;overflow:hidden;border-radius:16px;background:#e9c47c;border:3px solid #e9c47c;box-sizing:border-box;touch-action:none;user-select:none;-webkit-user-select:none}
  .gv-puzzle-grid:not(.gv-ready){display:none}
  .gv-pizza-tile{min-width:0;min-height:0;background-repeat:no-repeat;background-color:#e9c47c;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;position:relative;box-shadow:inset 0 0 0 1px rgba(70,38,15,.2)}
  .gv-pizza-tile:active{cursor:grabbing}
