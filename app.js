@@ -20,57 +20,89 @@ function pizza(){
 function beginPizza(img){
  if(game!=='pizza')return;
  pizzaActive=true;time=30;$('#time').textContent='30';
- $('#instructions').textContent='هر تکه رو با انگشت بگیر و روی تکه‌ای که باید جاش عوض بشه رها کن تا تصویر کامل بشه.';
- const board=document.createElement('div');board.className='jigsaw-board';
- $('#area').append(board);
- const shuffled=Array.from({length:9},(_,i)=>i);
- // Avoid starting with an already-solved board.
- do{shuffled.sort(()=>Math.random()-.5)}while(shuffled.every((v,i)=>v===i));
- let pieces=[];
- shuffled.forEach((correctIdx,position)=>{
-   const p=document.createElement('button');
-   p.type='button';p.className='jigsaw-piece';
-   p.dataset.correct=String(correctIdx);
-   p.setAttribute('aria-label','تکه پازل؛ برای جابه‌جایی بکش');
+ $('#instructions').textContent='هر تکه رو با انگشت بگیر و روی جای تکه‌ی دیگه رها کن تا جاشون عوض بشه.';
+ const area=$('#area');
+ area.innerHTML='';
+ area.classList.add('pizza-area');
+ const board=document.createElement('div');board.className='jigsaw-board';board.setAttribute('aria-label','پازل پیتزا ۹ تکه');
+ area.append(board);
+ // Each piece keeps its correct source crop. Its grid position is tracked separately.
+ const order=Array.from({length:9},(_,i)=>i);
+ for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+ if(order.every((v,i)=>v===i)){[order[0],order[1]]=[order[1],order[0]];}
+ const pieces=[];
+ order.forEach((correct,index)=>{
+   const p=document.createElement('button');p.type='button';p.className='jigsaw-piece';
+   p.dataset.correct=String(correct);p.dataset.position=String(index);
+   p.setAttribute('aria-label',`تکه ${index+1} از ۹`);
    p.style.backgroundImage=`url("${img}")`;
-   p.style.backgroundPosition=`${(correctIdx%3)*50}% ${Math.floor(correctIdx/3)*50}%`;
-   p.style.order=String(position);
-   p.addEventListener('pointerdown',e=>{
-     if(!pizzaActive)return;
-     e.preventDefault();
-     const startX=e.clientX,startY=e.clientY;
-     p.setPointerCapture(e.pointerId);
-     p.classList.add('dragging');
-     p.style.pointerEvents='none';
-     p.style.transform='scale(1.04)';
-     const move=ev=>{p.style.translate=`${ev.clientX-startX}px ${ev.clientY-startY}px`};
-     const end=ev=>{
-       p.removeEventListener('pointermove',move);
-       p.removeEventListener('pointerup',end);
-       p.removeEventListener('pointercancel',end);
-       p.classList.remove('dragging');
-       p.style.pointerEvents='';
-       p.style.transform='';
-       p.style.translate='';
-       const under=document.elementFromPoint(ev.clientX,ev.clientY);
-       const other=under&&under.closest?under.closest('.jigsaw-piece'):null;
-       if(other&&other!==p&&other.parentElement===board&&pizzaActive){
-         const before=pieces.filter(x=>Number(x.style.order)===Number(x.dataset.correct)).length;
-         const a=Number(p.style.order),b=Number(other.style.order);
-         p.style.order=String(b);other.style.order=String(a);
-         const after=pieces.filter(x=>Number(x.style.order)===Number(x.dataset.correct)).length;
-         if(after>before)add(after-before);
-         pieces.forEach(x=>x.classList.toggle('piece-correct',Number(x.style.order)===Number(x.dataset.correct)));
-         if(pieces.every(x=>Number(x.style.order)===Number(x.dataset.correct))){
-           pizzaActive=false;finish();
-         }
-       }
-     };
-     p.addEventListener('pointermove',move);
-     p.addEventListener('pointerup',end);
-     p.addEventListener('pointercancel',end);
-   });
-   pieces.push(p);board.append(p);
+   const col=correct%3,row=Math.floor(correct/3);
+   p.style.backgroundPosition=`${col*50}% ${row*50}%`;
+   place(p,index);pieces.push(p);board.append(p);
  });
- timer=setInterval(()=>{if(!pizzaActive)return;time--;$('#time').textContent=time;if(time<=0)finish()},1000);
+ function place(piece,pos){piece.style.gridColumn=String((pos%3)+1);piece.style.gridRow=String(Math.floor(pos/3)+1);piece.dataset.position=String(pos);}
+ function checkSolved(){
+   let solved=0;
+   pieces.forEach(piece=>{
+     const ok=Number(piece.dataset.position)===Number(piece.dataset.correct);
+     piece.classList.toggle('piece-correct',ok);if(ok)solved++;
+   });
+   $('#score').textContent=String(solved);
+   score=solved;
+   if(solved===9&&pizzaActive){pizzaActive=false;finish();}
+ }
+ let drag=null;
+ board.addEventListener('pointerdown',e=>{
+   const p=e.target.closest('.jigsaw-piece');
+   if(!p||!pizzaActive||drag)return;
+   e.preventDefault();
+   const r=p.getBoundingClientRect();
+   drag={piece:p,id:e.pointerId,startX:e.clientX,startY:e.clientY,dx:0,dy:0,rect:r};
+   p.classList.add('dragging');
+   try{p.setPointerCapture(e.pointerId)}catch{}
+ });
+ board.addEventListener('pointermove',e=>{
+   if(!drag||e.pointerId!==drag.id)return;
+   drag.dx=e.clientX-drag.startX;drag.dy=e.clientY-drag.startY;
+   drag.piece.style.transform=`translate(${drag.dx}px,${drag.dy}px) scale(1.04)`;
+ });
+ function finishDrag(e){
+   if(!drag||e.pointerId!==drag.id)return;
+   const moving=drag.piece;moving.style.transform='';moving.classList.remove('dragging');
+   // Calculate the destination cell from the board geometry; this works on touch screens
+   // and does not rely on elementFromPoint while the dragged tile captures the pointer.
+   const r=board.getBoundingClientRect();
+   const x=e.clientX-r.left,y=e.clientY-r.top;
+   const cellW=r.width/3,cellH=r.height/3;
+   let dest=-1;
+   if(x>=0&&y>=0&&x<r.width&&y<r.height){dest=Math.floor(y/cellH)*3+Math.floor(x/cellW);}
+   if(dest>=0){
+     const from=Number(moving.dataset.position);
+     const other=pieces.find(piece=>Number(piece.dataset.position)===dest);
+     if(other&&other!==moving){place(moving,dest);place(other,from);}
+   }
+   drag=null;checkSolved();
+ }
+ board.addEventListener('pointerup',finishDrag);
+ board.addEventListener('pointercancel',finishDrag);
+ checkSolved();
+ timer=setInterval(()=>{if(!pizzaActive)return;time--;$('#time').textContent=String(time);if(time<=0)finish()},1000);
 }
+
+// Isolated styles for the puzzle are injected by this script so no separate CSS edit is needed.
+(function installPizzaStyles(){
+ if(document.getElementById('pizza-puzzle-v4-style'))return;
+ const style=document.createElement('style');style.id='pizza-puzzle-v4-style';
+ style.textContent=`
+ #area.pizza-area{display:block!important;overflow:visible!important;min-height:0!important;padding:0!important}
+ #area.pizza-area .pizza-preview{width:min(100%,290px);aspect-ratio:1;margin:8px auto;position:relative;background-size:100% 100%;border-radius:50%;box-shadow:0 8px 24px #0005}
+ #area.pizza-area .pizza-count{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:white;font-weight:800;text-shadow:0 2px 6px #000;background:#0003;border-radius:50%;font-size:20px}
+ #area.pizza-area .pizza-count strong{font-size:40px}
+ #area.pizza-area .jigsaw-board{box-sizing:border-box;width:min(100%,440px);aspect-ratio:1;margin:0 auto;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3px;background:#e7b96a;padding:4px;border-radius:12px;overflow:hidden;touch-action:none;position:relative}
+ #area.pizza-area .jigsaw-piece{box-sizing:border-box;display:block;width:100%;height:100%;min-width:0;min-height:0;background-size:300% 300%!important;background-repeat:no-repeat!important;border:1px solid #f7d99b;border-radius:5px;box-shadow:0 2px 5px #0004;padding:0;margin:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;position:relative;z-index:1}
+ #area.pizza-area .jigsaw-piece.dragging{z-index:10;box-shadow:0 8px 18px #0009;cursor:grabbing}
+ #area.pizza-area .jigsaw-piece.piece-correct{border-color:#78c878}
+ @media(max-width:420px){#area.pizza-area .jigsaw-board{width:100%;gap:2px;padding:3px}#area.pizza-area .jigsaw-piece{border-radius:4px}}
+ `;
+ document.head.append(style);
+})();
